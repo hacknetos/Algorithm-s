@@ -1,14 +1,32 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/tauri";
   import { appWindow, WebviewWindow } from "@tauri-apps/api/window";
-  appWindow.listen("RSA-Stap", (event) => {
-    console.log(event.payload);
-    Loading = "Generate";
-    if (event.payload.Stap >= event.payload.From) {
-      Loading = "Generatet";
+  appWindow.listen(
+    "RSA-Stap",
+    (event: {
+      event: string;
+      id: number;
+      payload: {
+        From: number;
+        Stap: number;
+        Waht: string;
+      };
+      windowLabel: string;
+    }) => {
+      console.log(event.payload);
+      Loading = "Generate";
+      if (event.payload.Stap >= event.payload.From) {
+        Loading = "Generatet";
+      }
     }
-  });
+  );
   let bcounter = 0;
+  const counterB = () => {
+    bcounter += 1;
+  };
+  const counterRest = () => {
+    bcounter = 0;
+  };
   let Publickey = ``;
   let PrivateKey = ``;
   let Loading: "Must Generate" | "Generate" | "Generatet" = "Must Generate";
@@ -36,13 +54,21 @@
   <div class="Gesamt">
     <div class="Left">
       |--------------------------Public-Key-Start--------------------|
-      {Publickey}
+      {#each Publickey as buchstabe}
+        {#if bcounter >= 64}
+          {counterRest()}
+          <br />
+        {/if}
+        {counterB()}
+        {buchstabe.toString()}
+      {/each}
+
       |--------------------------Public-Key-End----------------------|
     </div>
     <div class="Riht">
-      |--------------------------Private-Key-Start-------------------|
+      <!-- |--------------------------Private-Key-Start-------------------|
       {PrivateKey}
-      |--------------------------Private-Key-End---------------------|
+      |--------------------------Private-Key-End---------------------| -->
     </div>
   </div>
 {/if}

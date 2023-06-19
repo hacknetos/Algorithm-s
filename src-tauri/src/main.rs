@@ -5,7 +5,6 @@ use cryp::rsa;
 use tauri::{ Manager, Window };
 
 mod cryp;
-
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn greet(name: &str) -> String {
