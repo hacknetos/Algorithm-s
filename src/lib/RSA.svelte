@@ -7,28 +7,26 @@
       event: string;
       id: number;
       payload: {
-        From: number;
-        Stap: number;
-        Waht: string;
+        from: number;
+        stap: number;
+        waht: string;
       };
       windowLabel: string;
     }) => {
-      console.log(event.payload);
       Loading = "Generate";
-      if (event.payload.Stap >= event.payload.From) {
+      payloadMsg = event.payload.waht;
+      MaxStaps = event.payload.from;
+      stap = event.payload.stap;
+      if (event.payload.stap >= event.payload.from) {
         Loading = "Generatet";
       }
     }
   );
-  let bcounter = 0;
-  const counterB = () => {
-    bcounter += 1;
-  };
-  const counterRest = () => {
-    bcounter = 0;
-  };
-  let Publickey = ``;
-  let PrivateKey = ``;
+  let Publickey: string[] = [""];
+  let PrivateKey: String[] = [""];
+  let payloadMsg = ``;
+  let MaxStaps = 0;
+  let stap = 0;
   let Loading: "Must Generate" | "Generate" | "Generatet" = "Must Generate";
 </script>
 
@@ -39,8 +37,10 @@
       class="Trigger"
       on:click={async () => {
         let a = await invoke("gen_key");
-        Publickey = a[0];
-        PrivateKey = a[1];
+        Publickey = await a[0];
+        //TODO Into a Fucking array BRO
+        PrivateKey = await a[1];
+        //TODO Into a Fucking array BRO
       }}>Generate</button
     >
     <details>
@@ -50,25 +50,27 @@
   </div>
 {:else if Loading == "Generate"}
   <h1>Generate</h1>
+  <label for="Loading">{payloadMsg}</label>
+  <progress id="Loading" max={MaxStaps} value={stap}
+    >{(MaxStaps / 100) * stap}%</progress
+  >
 {:else if Loading == "Generatet"}
   <div class="Gesamt">
     <div class="Left">
-      |--------------------------Public-Key-Start--------------------|
-      {#each Publickey as buchstabe}
-        {#if bcounter >= 64}
-          {counterRest()}
-          <br />
-        {/if}
-        {counterB()}
-        {buchstabe.toString()}
+      <r>|--------------------------Public-Key-Start--------------------|</r><br
+      />
+      {#each Publickey as line}
+        {line}<br />
       {/each}
-
-      |--------------------------Public-Key-End----------------------|
+      <r>|--------------------------Public-Key-End----------------------|</r>
     </div>
     <div class="Riht">
-      <!-- |--------------------------Private-Key-Start-------------------|
-      {PrivateKey}
-      |--------------------------Private-Key-End---------------------| -->
+      <r>|--------------------------Private-Key-Start-------------------|</r><br
+      />
+      {#each PrivateKey as line}
+        {line}<br />
+      {/each}
+      <r>|--------------------------Private-Key-End---------------------|</r>
     </div>
   </div>
 {/if}
@@ -87,9 +89,12 @@
   .Left,
   .Riht {
     width: fit-content;
-    hyphens: auto;
     text-align: justify; /* für Edge */
     -moz-text-align-last: justify; /* für Firefox vor 58.0 */
     text-align-last: justify;
+  }
+  #Loading {
+    width: 100%;
+    height: 2.5rem;
   }
 </style>
