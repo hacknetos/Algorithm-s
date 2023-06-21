@@ -21,14 +21,6 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 async fn gen_key(window: Window) -> Vec<Vec<String>> {
     let keys = rsa::generate_keys(window.clone());
-    let encrypt_msg = rsa::test_verschlüselung("Hallo World".to_string(), &keys.public);
-    let decrypt_msg = rsa::test_enschlüselung(encrypt_msg.clone(), &keys.private);
-    println!("decrypt_msg.to_signed_bytes_be().as_ref() -> {:?}", decrypt_msg.to_signed_bytes_le());
-    println!(
-        "crypt_msg is {:#?}\ndecrypt_msg is {:?}",
-        bigint_in_readabil(encrypt_msg, 32),
-        String::from_utf8(decrypt_msg.to_signed_bytes_le().to_vec()).unwrap()
-    );
 
     let mut limetet_text_vec = text_limiter(keys.public.n.to_str_radix(32), 64);
     limetet_text_vec.append(&mut text_limiter(keys.public.e.to_str_radix(32), 64));
@@ -46,7 +38,6 @@ async fn gen_key(window: Window) -> Vec<Vec<String>> {
         stap: 7,
         from: 7,
     });
-    println!("{:?}", res);
     return res;
 }
 fn main() {

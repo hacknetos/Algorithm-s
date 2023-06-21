@@ -126,22 +126,7 @@ pub fn euklid(mut a: BigInt, mut b: BigInt, mut s: BigInt, mut t: BigInt) -> Big
     }
     return t;
 }
-pub fn test_verschlüselung(msg: String, key: &PublicKey) -> BigInt {
-    println!("msg.as_bytes() -> {:?}", msg.as_bytes());
-    //TODO Um Bauen zum Array
-    let bigint_bytes_msg = BigInt::from_bytes_le(num_bigint::Sign::Plus, msg.as_bytes());
-    println!("bigint_bytes_msg -> {}", bigint_bytes_msg);
-    bigint_bytes_msg.modpow(&key.e, &key.n);
-    println!("After bigint_bytes_msg ^ e % n  -> {}", bigint_bytes_msg);
-    return bigint_bytes_msg;
-}
 
 fn send_msg(name: &str, msg: Payload, window: &Window) {
     let _ = window.emit(name, msg.to_owned());
-}
-pub fn test_enschlüselung(encrypt_msg: BigInt, key: &PrivateKey) -> BigInt {
-    //TODO Um Bauen zum Array
-    encrypt_msg.modpow(&key.d, &(&key.p * &key.q));
-    println!("encrypt_msg -> {}", &encrypt_msg);
-    return encrypt_msg;
 }
