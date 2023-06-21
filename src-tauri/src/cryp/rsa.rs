@@ -1,5 +1,6 @@
 use num_primes::{ Generator };
 use num_bigint::BigInt;
+use tauri::Window;
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
@@ -22,64 +23,93 @@ pub struct PublicKey {
 }
 
 pub fn generate_keys(window: tauri::Window) -> Keys {
-    let _ = window.emit("RSA-Stap", Payload {
-        waht: "Generate Random Prime number p".into(),
-        stap: 0,
-        from: 7,
-    });
+    send_msg(
+        "RSA-Stap",
+        Payload {
+            waht: "Generate Random Prime number p".into(),
+            stap: 0,
+            from: 7,
+        },
+        &window
+    );
     let p = BigInt::new(
         num_bigint::Sign::Plus,
-        vec![101] /*Generator::new_prime(1024).to_u32_digits()*/
+        vec![11] /*Generator::new_prime(1024).to_u32_digits()*/
     );
-    let _ = window.emit("RSA-Stap", Payload {
-        waht: "Generate Random Prime number q".into(),
-        stap: 1,
-        from: 7,
-    });
+    send_msg(
+        "RSA-Stap",
+        Payload {
+            waht: "Generate Random Prime number q".into(),
+            stap: 1,
+            from: 7,
+        },
+        &window
+    );
     let q = BigInt::new(
         num_bigint::Sign::Plus,
-        vec![103] /*Generator::new_prime(1024).to_u32_digits()*/
+        vec![13] /*Generator::new_prime(1024).to_u32_digits()*/
     );
-    let _ = window.emit("RSA-Stap", Payload {
-        waht: "Calculate number N from p * q".into(),
-        stap: 2,
-        from: 7,
-    });
-    let mut n = BigInt::from(p.clone() * q.clone());
-
-    let _ = window.emit("RSA-Stap", Payload {
-        waht: "Calculate number φN from (p - 1) * (q - 1)".into(),
-        stap: 3,
-        from: 7,
-    });
+    send_msg(
+        "RSA-Stap",
+        Payload {
+            waht: "Calculate number N from p * q".into(),
+            stap: 2,
+            from: 7,
+        },
+        &window
+    );
+    let n = BigInt::from(p.clone() * q.clone());
+    send_msg(
+        "RSA-Stap",
+        Payload {
+            waht: "Calculate number PhiN from (p - 1) * (q - 1)".into(),
+            stap: 3,
+            from: 7,
+        },
+        &window
+    );
     let phin: BigInt = (p.clone() - 1) * (q.clone() - 1);
-    let _ = window.emit("RSA-Stap", Payload {
-        waht: "Generate Random Prime number e".into(),
-        stap: 4,
-        from: 7,
-    });
+    send_msg(
+        "RSA-Stap",
+        Payload {
+            waht: "Calculate number N from p * q".into(),
+            stap: 4,
+            from: 7,
+        },
+        &window
+    );
     let e = BigInt::new(
         num_bigint::Sign::Plus,
-        vec![7] /*Generator::new_prime(1024).to_u32_digits()*/
+        vec![23] /*Generator::new_prime(1024).to_u32_digits()*/
     );
-    let _ = window.emit("RSA-Stap", Payload {
-        waht: "Calculate number d from e * d = 1 % φN".into(),
-        stap: 5,
-        from: 7,
-    });
-    let d = euklid(
-        phin.clone(), //phin
-        e.clone(), //e
+    send_msg(
+        "RSA-Stap",
+        Payload {
+            waht: "Generate Random Prime number e".into(),
+            stap: 5,
+            from: 7,
+        },
+        &window
+    );
+    let mut d = euklid(
+        phin.clone(),
+        e.clone(),
         BigInt::new(num_bigint::Sign::Plus, vec![0]),
         BigInt::new(num_bigint::Sign::Plus, vec![0])
     );
-    let _ = window.emit("RSA-Stap", Payload {
-        waht: "Create key".into(),
-        stap: 6,
-        from: 7,
-    });
-    println!("p:{p}\nq:{q}\nn:{n}\nphin:{phin}\ne:{e}");
-    println!("e*d%phin {}", &phin + &d);
+    if d.sign() == num_bigint::Sign::Minus {
+        d += &phin;
+    }
+    send_msg(
+        "RSA-Stap",
+        Payload {
+            waht: "Generate Keys".into(),
+            stap: 6,
+            from: 7,
+        },
+        &window
+    );
+    // println!("p:{p}\nq:{q}\nn:{n}\nphin:{phin}\ne:{e}\nd:{d}");
     let new_keys = Keys {
         private: PrivateKey { p: p.clone(), q: q.clone(), d: d.clone() },
         public: PublicKey { e: e.clone(), n: n.clone() },
@@ -92,7 +122,7 @@ pub fn euklid(mut a: BigInt, mut b: BigInt, mut s: BigInt, mut t: BigInt) -> Big
     let mut u = BigInt::new(num_bigint::Sign::Plus, vec![0]);
     let mut v = BigInt::new(num_bigint::Sign::Plus, vec![1]);
     while b != BigInt::new(num_bigint::Sign::Plus, vec![0]) {
-        let mut q = &a / &b;
+        let q = &a / &b;
         let b1 = b.clone(); // Variable zum Zwischenspeichern
         b = &a - &q * &b;
         a = b1;
@@ -102,8 +132,25 @@ pub fn euklid(mut a: BigInt, mut b: BigInt, mut s: BigInt, mut t: BigInt) -> Big
         let v1 = v.clone(); // Variable zum Zwischenspeichern
         v = &t - &q * &v;
         t = v1;
-        println!("{a},{b},{s},{t}");
     }
-    println!("s:\n{},\nt:\n{}\n s * t {}", &s, &t, &s * &t);
     return t;
+}
+pub fn test_verschlüselung(msg: String, key: &PublicKey) -> BigInt {
+    println!("msg.as_bytes() -> {:?}", msg.as_bytes());
+    //TODO Um Bauen zum Array
+    let bigint_bytes_msg = BigInt::from_bytes_le(num_bigint::Sign::Plus, msg.as_bytes());
+    println!("bigint_bytes_msg -> {}", bigint_bytes_msg);
+    bigint_bytes_msg.modpow(&key.e, &key.n);
+    println!("After bigint_bytes_msg ^ e % n  -> {}", bigint_bytes_msg);
+    return bigint_bytes_msg;
+}
+
+fn send_msg(name: &str, msg: Payload, window: &Window) {
+    let _ = window.emit(name, msg.to_owned());
+}
+pub fn test_enschlüselung(encrypt_msg: BigInt, key: &PrivateKey) -> BigInt {
+    //TODO Um Bauen zum Array
+    encrypt_msg.modpow(&key.d, &(&key.p * &key.q));
+    println!("encrypt_msg -> {}", &encrypt_msg);
+    return encrypt_msg;
 }

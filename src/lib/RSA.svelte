@@ -79,19 +79,32 @@
   .div-must-Generate details {
     margin-top: 2rem;
   }
-  .Gesamt {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 1fr;
-    grid-column-gap: 2rem;
-    grid-row-gap: 0px;
-  }
+
   .Left,
   .Riht {
-    width: fit-content;
+    overflow: hidden;
     text-align: justify; /* für Edge */
-    -moz-text-align-last: justify; /* für Firefox vor 58.0 */
-    text-align-last: justify;
+    font-family: monospace;
+    /* font-size: 20px; */
+  }
+  @media only screen and (max-width: 850px) {
+    .Gesamt {
+      margin: auto, 0px;
+      display: grid;
+      grid-template-rows: repeat(2, 1fr);
+      grid-template-rows: 1fr;
+      grid-column-gap: 0px;
+      grid-row-gap: 2rem;
+    }
+  }
+  @media only screen and (min-width: 851px) {
+    .Gesamt {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: 1fr;
+      grid-column-gap: 2rem;
+      grid-row-gap: 0px;
+    }
   }
   #Loading {
     width: 100%;
