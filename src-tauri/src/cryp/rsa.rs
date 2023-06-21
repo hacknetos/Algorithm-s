@@ -32,10 +32,7 @@ pub fn generate_keys(window: tauri::Window) -> Keys {
         },
         &window
     );
-    let p = BigInt::new(
-        num_bigint::Sign::Plus,
-        vec![11] /*Generator::new_prime(1024).to_u32_digits()*/
-    );
+    let p = BigInt::new(num_bigint::Sign::Plus, Generator::new_prime(1024).to_u32_digits());
     send_msg(
         "RSA-Stap",
         Payload {
@@ -45,10 +42,7 @@ pub fn generate_keys(window: tauri::Window) -> Keys {
         },
         &window
     );
-    let q = BigInt::new(
-        num_bigint::Sign::Plus,
-        vec![13] /*Generator::new_prime(1024).to_u32_digits()*/
-    );
+    let q = BigInt::new(num_bigint::Sign::Plus, Generator::new_prime(1024).to_u32_digits());
     send_msg(
         "RSA-Stap",
         Payload {
@@ -78,10 +72,7 @@ pub fn generate_keys(window: tauri::Window) -> Keys {
         },
         &window
     );
-    let e = BigInt::new(
-        num_bigint::Sign::Plus,
-        vec![23] /*Generator::new_prime(1024).to_u32_digits()*/
-    );
+    let e = BigInt::new(num_bigint::Sign::Plus, Generator::new_prime(1024).to_u32_digits());
     send_msg(
         "RSA-Stap",
         Payload {
