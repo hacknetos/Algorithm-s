@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/tauri";
   import { appWindow, WebviewWindow } from "@tauri-apps/api/window";
+  import { KeyStore } from "./KeyStore";
   appWindow.listen(
     "RSA-Stap",
     (event: {
@@ -22,6 +23,7 @@
       }
     }
   );
+  let cryptText = "";
   let Publickey: string[] = [""];
   let PrivateKey: String[] = [""];
   let payloadMsg = ``;
@@ -37,10 +39,10 @@
       class="Trigger"
       on:click={async () => {
         let a = await invoke("gen_key");
-        Publickey = await a[0];
-        //TODO Into a Fucking array BRO
-        PrivateKey = await a[1];
-        //TODO Into a Fucking array BRO
+        console.log(a);
+        Publickey = await a[0][0];
+        PrivateKey = await a[0][1];
+        KeyStore.init(a[1], a[2], a[3]);
       }}>Generate</button
     >
     <details>
@@ -73,6 +75,36 @@
       <r>|--------------------------Private-Key-End---------------------|</r>
     </div>
   </div>
+  <div class="erweiterung">
+    <textarea
+      name="Text"
+      class="cryptText"
+      width="95%"
+      bind:value={cryptText}
+      maxlength="500"
+      placeholder="Pls Give Some Text to Crypt"
+    />
+
+    <div class="erweiterung-extra">
+      <button
+        on:click={async () => {
+          cryptText = await invoke("encrypt_msg", {
+            msg: cryptText,
+            key: [$KeyStore[0], $KeyStore[1]],
+          });
+        }}>Verschlüsseln</button
+      >
+      <button
+        type="button"
+        on:click={async () => {
+          cryptText = await invoke("dectypt_msg", {
+            msg: cryptText,
+            key: [$KeyStore[0], $KeyStore[2]],
+          });
+        }}>Endschlüsseln</button
+      >
+    </div>
+  </div>
 {/if}
 
 <style>
@@ -86,6 +118,22 @@
     text-align: justify; /* für Edge */
     font-family: monospace;
     /* font-size: 20px; */
+  }
+  .erweiterung {
+    margin-top: 1rem;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    grid-column-gap: 0px;
+    grid-row-gap: 1rem;
+  }
+  .erweiterung textarea {
+    margin-left: 2%;
+    max-width: 95%;
+    width: 95%;
+  }
+  .erweiterung-extra {
   }
   @media only screen and (max-width: 850px) {
     .Gesamt {

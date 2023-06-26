@@ -1,6 +1,10 @@
+use std::str::FromStr;
+
 use num_primes::{ Generator };
-use num_bigint::BigInt;
+use num::BigInt;
 use tauri::Window;
+
+use crate::cryp::converter;
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
@@ -32,7 +36,7 @@ pub fn generate_keys(window: tauri::Window) -> Keys {
         },
         &window
     );
-    let p = BigInt::new(num_bigint::Sign::Plus, Generator::new_prime(1024).to_u32_digits());
+    let p = BigInt::new(num_bigint::Sign::Plus, Generator::new_prime(2048).to_u32_digits());
     send_msg(
         "RSA-Stap",
         Payload {
@@ -42,7 +46,7 @@ pub fn generate_keys(window: tauri::Window) -> Keys {
         },
         &window
     );
-    let q = BigInt::new(num_bigint::Sign::Plus, Generator::new_prime(1024).to_u32_digits());
+    let q = BigInt::new(num_bigint::Sign::Plus, Generator::new_prime(2048).to_u32_digits());
     send_msg(
         "RSA-Stap",
         Payload {
@@ -72,7 +76,7 @@ pub fn generate_keys(window: tauri::Window) -> Keys {
         },
         &window
     );
-    let e = BigInt::new(num_bigint::Sign::Plus, Generator::new_prime(1024).to_u32_digits());
+    let e = BigInt::new(num_bigint::Sign::Plus, Generator::new_prime(2048).to_u32_digits());
     send_msg(
         "RSA-Stap",
         Payload {
@@ -82,12 +86,7 @@ pub fn generate_keys(window: tauri::Window) -> Keys {
         },
         &window
     );
-    let mut d = euklid(
-        phin.clone(),
-        e.clone(),
-        BigInt::new(num_bigint::Sign::Plus, vec![0]),
-        BigInt::new(num_bigint::Sign::Plus, vec![0])
-    );
+    let mut d = euklid(phin.clone(), e.clone());
     if d.sign() == num_bigint::Sign::Minus {
         d += &phin;
     }
@@ -102,14 +101,14 @@ pub fn generate_keys(window: tauri::Window) -> Keys {
     );
     // println!("p:{p}\nq:{q}\nn:{n}\nphin:{phin}\ne:{e}\nd:{d}");
     let new_keys = Keys {
-        private: PrivateKey { p: p.clone(), q: q.clone(), d: d.clone() },
-        public: PublicKey { e: e.clone(), n: n.clone() },
+        public: PublicKey { e, n },
+        private: PrivateKey { p, q, d },
     };
     return new_keys;
 }
-pub fn euklid(mut a: BigInt, mut b: BigInt, mut s: BigInt, mut t: BigInt) -> BigInt {
-    s = BigInt::new(num_bigint::Sign::Plus, vec![1]);
-    t = BigInt::new(num_bigint::Sign::Plus, vec![0]);
+pub fn euklid(mut a: BigInt, mut b: BigInt) -> BigInt {
+    let mut s = BigInt::new(num_bigint::Sign::Plus, vec![1]);
+    let mut t = BigInt::new(num_bigint::Sign::Plus, vec![0]);
     let mut u = BigInt::new(num_bigint::Sign::Plus, vec![0]);
     let mut v = BigInt::new(num_bigint::Sign::Plus, vec![1]);
     while b != BigInt::new(num_bigint::Sign::Plus, vec![0]) {
@@ -129,4 +128,30 @@ pub fn euklid(mut a: BigInt, mut b: BigInt, mut s: BigInt, mut t: BigInt) -> Big
 
 fn send_msg(name: &str, msg: Payload, window: &Window) {
     let _ = window.emit(name, msg.to_owned());
+}
+pub fn encrypt(n: BigInt, e: BigInt, msg: String) -> Option<BigInt> {
+    let bigint_bytes_msg = BigInt::from_bytes_le(num_bigint::Sign::Plus, msg.as_bytes());
+    if bigint_bytes_msg > n {
+        return None;
+    }
+    return Option::Some(bigint_bytes_msg.modpow(&e, &n));
+}
+pub fn dectypt(n: BigInt, d: BigInt, msg: String) -> BigInt {
+    let bigint_bytes_msg = converter::base32_to_dec(msg);
+    return bigint_bytes_msg.modpow(&d, &n);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_euklid() {
+        let p = BigInt::new(num_bigint::Sign::Plus, vec![11]);
+        let q = BigInt::new(num_bigint::Sign::Plus, vec![13]);
+        let e = BigInt::new(num_bigint::Sign::Plus, vec![23]);
+        let phin = (p - 1) * (q - 1);
+        let d = euklid(phin, e);
+        assert_eq!(d, BigInt::new(num_bigint::Sign::Plus, vec![47]));
+    }
 }

@@ -1,11 +1,15 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use cryp::rsa;
-use num_bigint::BigInt;
-use tauri::{ Manager, Window, regex::bytes::Replacer };
+use std::{ rc::Rc };
+use std::env;
+use cryp::converter::{ dec_to_hex, hex_to_dec, dec_to_base32, base32_to_dec, self };
+use cryp::rsa::{ self, Keys };
+use num::BigInt;
+use tauri::{ Window };
 
 mod cryp;
+
 #[derive(Clone, serde::Serialize)]
 struct Payload {
     waht: String,
@@ -19,7 +23,7 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 #[tauri::command]
-async fn gen_key(window: Window) -> Vec<Vec<String>> {
+async fn gen_key(window: Window) -> (Vec<Vec<std::string::String>>, String, String, String) {
     let keys = rsa::generate_keys(window.clone());
 
     let mut limetet_text_vec = text_limiter(keys.public.n.to_str_radix(32), 64);
@@ -33,17 +37,42 @@ async fn gen_key(window: Window) -> Vec<Vec<String>> {
     limetet_text_vec.append(&mut text_limiter(keys.private.d.to_str_radix(32), 64));
 
     res.push(limetet_text_vec);
+
     let _ = window.emit("RSA-Stap", Payload {
         waht: "Done".into(),
         stap: 7,
         from: 7,
     });
-    return res;
+
+    return (
+        res,
+        converter::dec_to_base32(keys.public.n),
+        converter::dec_to_base32(keys.public.e),
+        converter::dec_to_base32(keys.private.d),
+    );
+}
+
+#[tauri::command]
+async fn encrypt_msg(window: tauri::Window, msg: String, key: (String, String)) -> String {
+    let opt = rsa::encrypt(converter::base32_to_dec(key.0), converter::base32_to_dec(key.1), msg);
+    if opt.is_none() {
+        return String::from("The Msg Must Smoler then N");
+    } else {
+        return dec_to_base32(opt.unwrap());
+    }
+}
+
+#[tauri::command]
+async fn dectypt_msg(window: tauri::Window, msg: String, key: (String, String)) -> String {
+    let de_msg = rsa
+        ::dectypt(converter::base32_to_dec(key.0), converter::base32_to_dec(key.1), msg)
+        .to_signed_bytes_le();
+    return String::from_utf8(de_msg).unwrap();
 }
 fn main() {
     tauri::Builder
         ::default()
-        .invoke_handler(tauri::generate_handler![greet, gen_key])
+        .invoke_handler(tauri::generate_handler![greet, gen_key, encrypt_msg, dectypt_msg])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -63,14 +92,4 @@ fn text_limiter(text_to_space: String, how_long: u32) -> Vec<String> {
     }
     result.push(spacet_text);
     return result.to_owned();
-}
-fn bigint_in_readabil(bigint_msg: BigInt, factor: u32) -> String {
-    return bigint_msg.to_str_radix(factor);
-}
-fn vec_in_readabil(big_int_vec: Vec<BigInt>, factor: u32) -> Vec<String> {
-    let mut string_big_int_vec: Vec<String> = Vec::new();
-    for zahl in big_int_vec {
-        string_big_int_vec.push(zahl.to_str_radix(factor));
-    }
-    return string_big_int_vec;
 }
