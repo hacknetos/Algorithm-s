@@ -1,6 +1,8 @@
 <script lang="ts">
   import Greet from "./lib/Greet.svelte";
   import RSA from "./lib/RSA.svelte";
+  import NNA from "./lib/NNA.svelte";
+
   let Active = "RSA";
 </script>
 
@@ -13,11 +15,20 @@
         Active = "RSA";
       }}>RSA</button
     >
+    <button
+      class="Trigger"
+      class:selected={Active === "NNA"}
+      on:click={() => {
+        Active = "NNA";
+      }}>NNA</button
+    >
     <button class="Trigger">Other</button>
   </div>
   <div class="content">
     {#if Active === "RSA"}
       <RSA />
+    {:else if Active === "NNA"}
+      <NNA />
     {:else if !false}
       {Active}
     {/if}
