@@ -7,8 +7,13 @@
     y: number;
   };
 
-  var width = 800;
-  var height = 600;
+  var width = 500;
+  var height = 500;
+  var minAnzahl = 3;
+  var maxAnzahl = 10;
+  let fortschrit = 0;
+  let fortschritTest = 0;
+
   var points: pointofinterest[] = [
     {
       x: getRandomInt(499, 1),
@@ -20,8 +25,11 @@
   let canvas;
 
   onMount(() => {
-    for (let i = 0; i < getRandomInt(10, 3); i++) {
-      points.push({ x: getRandomInt(499, 1), y: getRandomInt(499, 1) });
+    for (let i = 0; i < getRandomInt(maxAnzahl, minAnzahl); i++) {
+      points.push({
+        x: getRandomInt(width - 1, 1),
+        y: getRandomInt(height - 1, 1),
+      });
     }
     ctx = canvas.getContext("2d");
     draw();
@@ -31,11 +39,19 @@
   function getRandomInt(max, min) {
     return Math.floor(Math.random() * max) + min;
   }
-  appWindow.onResized(async ({ payload: size }) => {
-    width = size.width;
-    height = size.height;
-  });
 
+  function rest() {
+    ctx.clearRect(0, 0, width, height);
+    points = [];
+    Order = [];
+    for (let i = 0; i < getRandomInt(maxAnzahl, minAnzahl); i++) {
+      points.push({
+        x: getRandomInt(width - 1, 1),
+        y: getRandomInt(height - 1, 1),
+      });
+    }
+    draw();
+  }
   function draw() {
     for (let i = 0; i < points.length; i++) {
       ctx.beginPath();
@@ -60,12 +76,23 @@
     while (Order.length < points.length) {
       let newInOrder = await Rechnen();
       await Order.push(points[newInOrder]);
-      console.table(Order);
       await drawLine(
         Order[Order.length - 2],
         Order[Order.length - 1],
         "#3febeb"
       );
+      fortschrit = (100 / points.length) * Order.length;
+    }
+  };
+  const redraw = async () => {
+    ctx.clearRect(0, 0, width, height);
+    draw();
+    let lastpoint;
+    for (let i = 0; i < Order.length; i++) {
+      if (i > 0) {
+        drawLine(lastpoint, Order[i], "#3febeb");
+      }
+      lastpoint = Order[i];
     }
   };
   const drawLine = async (
@@ -76,31 +103,46 @@
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.5;
     ctx.strokeStyle = color;
     ctx.fill();
     ctx.stroke();
   };
   const Rechnen = async () => {
-    let lowets = undefined;
+    fortschritTest = 0;
+    let lowets = Number.MAX_VALUE;
+    let lowersID = 2;
     for (let i = 0; i < points.length; i++) {
-      let nowX = points[i].x;
-      let nowY = points[i].y;
+      fortschritTest = (100 / points.length) * i;
       if (!Order.includes(points[i])) {
-        let nowDis = Math.sqrt(Math.pow(nowX, 2) + Math.pow(nowY, 2));
-        await drawLine(Order[Order.length - 1], points[i], "#9c0000");
-        await Sleep(500);
-        await drawLine(Order[Order.length - 1], points[i], "#303030");
-        console.log(nowDis);
+        let nowDis = 0;
+        let nowX = Order[Order.length - 1].x - points[i].x;
+        let nowY = Order[Order.length - 1].y - points[i].y;
+        if (nowX < -1) {
+          nowX *= -1;
+        } else if (nowX === 0) {
+          nowDis = nowY;
+        }
+        if (nowY < -1) {
+          nowY *= -1;
+        } else if (nowY === 0) {
+          nowDis = nowX;
+        }
+        nowDis = Math.sqrt(Math.pow(nowX, 2) + Math.pow(nowY, 2));
+        await drawLine(Order[Order.length - 1], points[i], "#80000085");
+        await Sleep(5);
+        await redraw();
         if (
           (nowDis < lowets && !Order.includes(points[i])) ||
           (lowets == undefined && !Order.includes(points[i]))
         ) {
-          lowets = i;
+          lowets = nowDis;
+          lowersID = i;
         }
       }
     }
-    return lowets;
+    await redraw();
+    return lowersID;
   };
   function Sleep(milliseconds) {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -108,11 +150,53 @@
 </script>
 
 <h1>NNA</h1>
-<canvas width="500px" height="500px" id="Fild" bind:this={canvas} />
-<button class="Trigger" on:click={cheack}>Start</button>
+<h3>{fortschrit}%</h3>
+<h5>{fortschritTest}%</h5>
+<canvas {width} {height} id="Fild" bind:this={canvas} />
+<div class="nice">
+  <button class="Trigger" on:click={cheack}>Start</button>
+  <button class="Trigger" on:click={rest}>Rest</button>
+  <label for="Width">Width:</label>
+  <input
+    type="number"
+    bind:value={width}
+    name="Width"
+    placeholder="with"
+    min="500"
+  />
+
+  <label for="height">height:</label>
+  <input
+    type="number"
+    name="height"
+    bind:value={height}
+    placeholder="height"
+    min="500"
+  />
+
+  <label for="maxAnzahl">maxAnzahl:</label>
+  <input
+    type="number"
+    name="maxAnzahl"
+    bind:value={maxAnzahl}
+    placeholder="maxAnzahl"
+  />
+
+  <label for="minAnzahl">minAnzahl:</label>
+  <input
+    type="number"
+    name="minAnzahl"
+    bind:value={minAnzahl}
+    placeholder="minAnzahl"
+  />
+</div>
 
 <style>
   canvas {
     background-color: #303030;
+  }
+  .nice {
+    display: flex;
+    flex-direction: column;
   }
 </style>

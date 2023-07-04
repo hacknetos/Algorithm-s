@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "Algorithm's",
-    "version": "0.0.0"
+    "version": "0.2.3"
   },
   "tauri": {
     "allowlist": {
@@ -113,10 +113,45 @@
         "open": true
       }
     },
+    "updater": {
+      "active": false,
+      "dialog": true,
+      "pubkey": "",
+      "windows": {
+        "installMode": "quiet",
+        "installerArgs": []
+      }
+    },
     "bundle": {
+      "appimage": {
+        "bundleMediaFramework": true
+      },
+      "category": "Dev",
+      "copyright": "",
+      "deb": {
+        "files": {
+          "/usr/share/README.md": "../README.md",
+          "usr/share/assets": "../assets/"
+        }
+      },
+      "publisher": "Hacknet.os",
+      "windows": {
+        "allowDowngrades": true,
+        "certificateThumbprint": null,
+        "digestAlgorithm": null,
+        "nsis": null,
+        "timestampUrl": null,
+        "tsp": false,
+        "webviewFixedRuntimePath": null,
+        "webviewInstallMode": {
+          "silent": true,
+          "type": "offlineInstaller"
+        },
+        "wix": null
+      },
       "active": true,
       "targets": "all",
-      "identifier": "com.tauri.dev",
+      "identifier": "Algorithm's",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
